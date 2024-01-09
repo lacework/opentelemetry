@@ -9,8 +9,8 @@ if [[ -z "$1" || -z "$2" || -z "$3" ]]; then
 fi
 
 kubectl create secret generic lacework-api-key \
-  --from-literal=lwKeyId=LWINTBVB_1C6D78E73AE77FD5E17D94B4A982EFD6438D38D9A8F612A \
-  --from-literal=lwSecret=_56f0d8f4a4f28e1214384afc9c6cb2e0 \
-  --from-literal=lwAccount=lwintbvboe.lacework.net
+  --from-literal=lwKeyId=$1 \
+  --from-literal=lwSecret=$2 \
+  --from-literal=lwAccount=$3
 
 kubectl apply -f .
