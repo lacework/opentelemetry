@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: container-vulnerabilities-job
+spec:
+# Once an hour
+#  schedule: "0 * * * *"
+# Once a minute
+#  schedule: "* * * * *"
+# Once every five minutes
+#  schedule: "*/5 * * * *"
+# Once every 30 minutes
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: container-vulnerabilities
+            image: bjornboelacework/opentelemetry-extractor:0.1
+            imagePullPolicy: "Always"
+            workingDir: /app/container-vulnerabilities
+            args:
+              - run.sh
+            env:
+            - name: lwKeyId
+              valueFrom:
+                secretKeyRef:
+                  name: lacework-api-key
+                  key: lwKeyId
+            - name: lwSecret
+              valueFrom:
+                secretKeyRef:
+                  name: lacework-api-key
+                  key: lwSecret
+            - name: lwAccount
+              valueFrom:
+                secretKeyRef:
+                  name: lacework-api-key
+                  key: lwAccount
+            - name: lwDataDirectory
+              value: /data/container-vulnerabilities
+            - name: lwMetricsEndpoint
+              value: http://opentelemetry-collector:4318
+            volumeMounts:
+            - name: data-volume
+              mountPath: /data
+          restartPolicy: OnFailure
+          volumes:
+          - name: data-volume
+            persistentVolumeClaim:
+              claimName: shared-storage
+      backoffLimit: 5
