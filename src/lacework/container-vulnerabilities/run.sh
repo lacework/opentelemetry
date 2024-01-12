@@ -85,7 +85,7 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                         start_time_unix_nano: .scanStartTimeNanos,
                                                         time_unix_nano: .scanEndTimeNanos,
                                                         attributes: .attributes
-                                                        }' | jq --slurp '.' | jq '{
+                                                        }' | jq 'select(.asDouble != null)' | jq --slurp '.' | jq '{
                                                                                     name: "container.cve.high",
                                                                                     unit: "CVEs",
                                                                                     description: "Number of high CVEs",
@@ -97,7 +97,7 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                         start_time_unix_nano: .scanStartTimeNanos,
                                                         time_unix_nano: .scanEndTimeNanos,
                                                         attributes: .attributes
-                                                        }' | jq --slurp '.' | jq '{
+                                                        }' | jq 'select(.asDouble != null)' | jq --slurp '.' | jq '{
                                                                                     name: "container.cve.medium",
                                                                                     unit: "CVEs",
                                                                                     description: "Number of medium CVEs",
@@ -109,7 +109,7 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                         start_time_unix_nano: .scanStartTimeNanos,
                                                         time_unix_nano: .scanEndTimeNanos,
                                                         attributes: .attributes
-                                                        }' | jq --slurp '.' | jq '{
+                                                        }' | jq 'select(.asDouble != null)' | jq --slurp '.' | jq '{
                                                                                     name: "container.cve.info",
                                                                                     unit: "CVEs",
                                                                                     description: "Number of info CVEs",
