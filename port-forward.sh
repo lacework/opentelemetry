@@ -8,7 +8,6 @@ echo "Prometheus: http://localhost:9090" & \
 echo "OpenTelemetry Collector Metrics: http://localhost:8888/metrics" & \
 echo "OpenTelemetry Collector oltp: http://localhost:4317" & \
 echo "OpenTelemetry Collector oltp http: http://localhost:4318" & \
-
 echo "Press CTRL-C to stop port forwarding and exit the script"
 wait
 
