@@ -6,9 +6,9 @@ if [[ -z "$lwKeyId" || -z "$lwSecret" || -z "$lwAccount" ]]; then
 fi
 
 (
-    export lwDataDirectory=/tmp/testrunpaginglwapi
-
-
+    export lwTmpWorkDirectory=/tmp/testrunpaginglwapi
+    mkdir -p $lwTmpWorkDirectory
+    outputFile=${lwTmpWorkDirectory}/testoutput.json
 
     export lwBearerToken=$(curl -s --location 'https://'$lwAccount'/api/v2/access/tokens' \
                     --header 'X-LW-UAKS: '$lwSecret'' \
@@ -18,12 +18,14 @@ fi
 
     echo Running empty filter
     echo Account: $lwAccount
-    rowsloaded=`./runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Containers/search" "{}" | jq -c | wc -l`
+    ./runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Containers/search" "{}" "${outputFile}"
+    rowsloaded=`cat ${outputFile} | jq -c | wc -l`
     echo Loaded $rowsloaded rows with no filter
 
     echo Adding time filter
     echo Account: $lwAccount
     filter='{"timeFilter":{"startTime":"2024-01-08T15:52:23Z","endTime":"2024-01-08T16:44:35Z"}}'
-    rowsloaded=`./runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Containers/search" "$filter" | jq -c | wc -l`
-    echo Loaded $rowsloaded rows with filter
+    ./runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Containers/search" "$filter" "${outputFile}"
+    rowsloaded=`cat ${outputFile} | jq -c | wc -l`
+    echo Loaded $rowsloaded rows with no filter
 )

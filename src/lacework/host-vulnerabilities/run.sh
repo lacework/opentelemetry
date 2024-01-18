@@ -1,9 +1,12 @@
 #!/bin/bash
-echo Start loading container vulnerabilities
+echo Start loading host vulnerabilities
 
 #Load previous filter, if it exists
 prevFilterFile=$lwDataDirectory/hostvulnprevfilter.json
 mkdir -p $lwDataDirectory
+mkdir -p $lwTmpWorkDirectory
+cd $lwTmpWorkDirectory
+
 touch $prevFilterFile
 prevFilter=$(cat $prevFilterFile)
 echo Previous filter: $prevFilter
@@ -13,19 +16,19 @@ completeFilter="{\"timeFilter\":$newFilter}"
 echo New filter: $newFilter
 echo Complete filter: $completeFilter
 
-runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Hosts/search" "$completeFilter" > $lwDataDirectory/vuln-data.json
+runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Hosts/search" "$completeFilter" "vuln-data.json"
 
-if [ -z "$(cat "$lwDataDirectory/vuln-data.json")" ]; then
+if [ -z "$(head -1 "vuln-data.json")" ]; then
     echo No data, exiting
     exit
 fi
 
 currseondstime=$(date +%s)
 currnanotime=$((currseondstime * 1000000000))
-echo Currnent time in nanonseconds: $currnanotime
+echo Current time in nanonseconds: $currnanotime
+lwUrl="https://$lwAccount/ui/investigation/host/HostVulnerabilityDashboard"
 
-
-cat $lwDataDirectory/vuln-data.json | jq --arg currnanotime "$currnanotime" '{
+jq --arg currnanotime "$currnanotime" '{
     hostName: .evalCtx.hostname,
     lwMachineid: .mid,
     startTime: $currnanotime,
@@ -36,10 +39,11 @@ cat $lwDataDirectory/vuln-data.json | jq --arg currnanotime "$currnanotime" '{
     cveLow: .riskInfo.factors_breakdown.cve_counts_by_package_status.Overall.Low,
     cveInfo: .riskInfo.factors_breakdown.cve_counts_by_package_status.Overall.Info,
     attributes: .machineTags
-}' | jq -c | sort | uniq | jq '(.attributes | to_entries) as $entries | 
+}' vuln-data.json | jq -c | sort | uniq | jq '(.attributes | to_entries) as $entries | 
                                   .attributes = $entries | 
                                   .attributes |= map({key: .key, value: {stringValue: .value}})' |
-      jq  '.attributes += [{
+      jq  --arg lwUrl "$lwUrl" \
+          '.attributes += [{
                               "key": "hostName",
                               "value": {stringValue: .hostName}
                           }] | del(.hostName) |
@@ -50,10 +54,14 @@ cat $lwDataDirectory/vuln-data.json | jq --arg currnanotime "$currnanotime" '{
           .attributes += [{
                               "key": "riskScore",
                               "value": {doubleValue: .riskScore}
-                          }] | del(.riskScore)' |
-      jq '.attributes |= map(select(.value.stringValue != "NOT_AVAILABLE"))' > $lwDataDirectory/tmp-condenced-vulnerability-information.json
+                          }] | del(.riskScore) |
+          .attributes += [{
+                              "key": "lwUrl",
+                              "value": {stringValue: $lwUrl}
+                          }]' |
+      jq '.attributes |= map(select(.value.stringValue != "NOT_AVAILABLE"))' > tmp-condenced-vulnerability-information.json
 
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveCritical,
                                                         start_time_unix_nano: .startTime,
                                                         time_unix_nano: .startTime,
@@ -63,9 +71,9 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of critical CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-critical.json
+                                                                                }' > tmp-critical.json
 
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveHigh,
                                                         start_time_unix_nano: .startTime,
                                                         time_unix_nano: .startTime,
@@ -75,9 +83,9 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of high CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-high.json
+                                                                                }' > tmp-high.json
 
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveMedium,
                                                         start_time_unix_nano: .startTime,
                                                         time_unix_nano: .startTime,
@@ -87,9 +95,9 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of medium CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-medium.json
+                                                                                }' > tmp-medium.json
 
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveInfo,
                                                         start_time_unix_nano: .startTime,
                                                         time_unix_nano: .startTime,
@@ -99,10 +107,10 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of info CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-info.json
+                                                                                }' > tmp-info.json
 
 
-ALL_VULNS=`cat $lwDataDirectory/tmp-critical.json $lwDataDirectory/tmp-high.json $lwDataDirectory/tmp-medium.json $lwDataDirectory/tmp-info.json | jq --slurp '.'`
+ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-info.json | jq --slurp '.'`
 
 echo "{
   \"resourceMetrics\": [
@@ -124,11 +132,13 @@ echo "{
       ]
     }
   ]
-}"  | jq > $lwDataDirectory/tmp-payload.json
+}"  | jq > tmp-payload.json
 
-echo Got `cat $lwDataDirectory/tmp-payload.json | wc -l` lines of json data
+filter-attributes.sh "tmp-payload.json" "final-payload.json" "$lwAttributeFilter"
+
+echo Got `cat final-payload.json | wc -l` lines of json data
 echo Sending to opentelmetry
-curl -S -X POST -H "Content-Type: application/json" -d @$lwDataDirectory/tmp-payload.json -i ${lwMetricsEndpoint}/v1/metrics
+curl -S -X POST -H "Content-Type: application/json" -d @final-payload.json -i ${lwMetricsEndpoint}/v1/metrics
 
 echo ""
 echo Updating last filter used

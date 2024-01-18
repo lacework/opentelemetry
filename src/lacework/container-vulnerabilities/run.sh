@@ -4,6 +4,8 @@ echo Start loading container vulnerabilities
 #Load previous filter, if it exists
 prevFilterFile=$lwDataDirectory/containervulnprevfilter.json
 mkdir -p $lwDataDirectory
+mkdir -p $lwTmpWorkDirectory
+cd $lwTmpWorkDirectory
 touch $prevFilterFile
 prevFilter=$(cat $prevFilterFile)
 echo Previous filter: $prevFilter
@@ -13,18 +15,19 @@ completeFilter="{\"timeFilter\":$newFilter}"
 echo New filter: $newFilter
 echo Complete filter: $completeFilter
 
-runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Containers/search" "$completeFilter" > $lwDataDirectory/vuln-data.json
+runpaginglwapi.sh "POST" "/api/v2/Vulnerabilities/Containers/search" "$completeFilter" "vuln-data.json"
 
-if [ -z "$(cat "$lwDataDirectory/vuln-data.json")" ]; then
+if [ -z "$(head -1 "vuln-data.json")" ]; then
     echo No data, exiting
     exit
 fi
 
 currseondstime=$(date +%s)
 currnanotime=$((currseondstime * 1000000000))
-echo Currnent time in nanonseconds: $currnanotime
+echo Current time in nanonseconds: $currnanotime
+lwUrl="https://$lwAccount/ui/investigation/container/VulnerabilityDashboard"
 
-cat $lwDataDirectory/vuln-data.json | jq --arg currnanotime "$currnanotime" '{
+jq --arg currnanotime "$currnanotime" '{
     digest: .evalCtx.image_info.digest,
     lwImageId: .evalCtx.image_info.id,
     registry: .evalCtx.image_info.registry,
@@ -38,7 +41,8 @@ cat $lwDataDirectory/vuln-data.json | jq --arg currnanotime "$currnanotime" '{
     activeContainers: .riskInfo.factors_breakdown.active_containers,
     scanStartTimeNanos: $currnanotime,
     scanEndTimeNanos: $currnanotime
-} | .tags |= join(", ")' | jq -c | sort | uniq | jq '.attributes += [{
+} | .tags |= join(", ")' vuln-data.json | jq -c | sort | uniq | jq --arg lwUrl "$lwUrl" \
+                                                    '.attributes += [{
                                                                     "key": "digest",
                                                                     "value": {stringValue: .digest}
                                                                 }] | del(.digest) |
@@ -63,12 +67,15 @@ cat $lwDataDirectory/vuln-data.json | jq --arg currnanotime "$currnanotime" '{
                                                                     "value": {stringValue: .tags}
                                                                 }] | del(.tags) |
                                                     .attributes += [{
+                                                                        "key": "lwUrl",
+                                                                        "value": {stringValue: $lwUrl}
+                                                                    }] |
+                                                    .attributes += [{
                                                                     "key": "activeContainers",
                                                                     "value": {intValue: .activeContainers}
-                                                                }] | del(.activeContainers) | del(.lwEvalGuid)' > $lwDataDirectory/tmp-condenced-vulnerability-information.json
+                                                                }] | del(.activeContainers) | del(.lwEvalGuid)' > tmp-condenced-vulnerability-information.json
 
-
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveCritical,
                                                         start_time_unix_nano: .scanStartTimeNanos,
                                                         time_unix_nano: .scanEndTimeNanos,
@@ -78,9 +85,9 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of critical CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-critical.json
+                                                                                }' > tmp-critical.json
 
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveHigh,
                                                         start_time_unix_nano: .scanStartTimeNanos,
                                                         time_unix_nano: .scanEndTimeNanos,
@@ -90,9 +97,9 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of high CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-high.json
+                                                                                }' > tmp-high.json
 
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveMedium,
                                                         start_time_unix_nano: .scanStartTimeNanos,
                                                         time_unix_nano: .scanEndTimeNanos,
@@ -102,9 +109,9 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of medium CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-medium.json
+                                                                                }' > tmp-medium.json
 
-cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveInfo,
                                                         start_time_unix_nano: .scanStartTimeNanos,
                                                         time_unix_nano: .scanEndTimeNanos,
@@ -114,10 +121,10 @@ cat $lwDataDirectory/tmp-condenced-vulnerability-information.json | jq '{
                                                                                     unit: "CVEs",
                                                                                     description: "Number of info CVEs",
                                                                                     gauge: {dataPoints: .}
-                                                                                }' > $lwDataDirectory/tmp-info.json
+                                                                                }' > tmp-info.json
 
 
-ALL_VULNS=`cat $lwDataDirectory/tmp-critical.json $lwDataDirectory/tmp-high.json $lwDataDirectory/tmp-medium.json $lwDataDirectory/tmp-info.json | jq --slurp '.'`
+ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-info.json | jq --slurp '.'`
 
 echo "{
   \"resourceMetrics\": [
@@ -139,11 +146,13 @@ echo "{
       ]
     }
   ]
-}"  | jq > $lwDataDirectory/tmp-payload.json
+}"  | jq > tmp-payload.json
 
-echo Got `cat $lwDataDirectory/tmp-payload.json | wc -l` lines of json data
+filter-attributes.sh "tmp-payload.json" "final-payload.json" "$lwAttributeFilter"
+
+echo Got `cat final-payload.json | wc -l` lines of json data
 echo Sending to opentelmetry
-curl -S -X POST -H "Content-Type: application/json" -d @$lwDataDirectory/tmp-payload.json -i ${lwMetricsEndpoint}/v1/metrics
+curl -S -X POST -H "Content-Type: application/json" -d @final-payload.json -i ${lwMetricsEndpoint}/v1/metrics
 
 echo ""
 echo Updating last filter used

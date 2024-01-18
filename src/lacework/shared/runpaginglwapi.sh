@@ -1,36 +1,35 @@
 #!/bin/bash
-export operation=$1
-export api=$2
-export payload=$3
-#echo Operation: $operation
-#echo API: $api
-#echo Payload: $payload
+operation=$1
+api=$2
+payload=$3
+destination=$4
+echo Operation: $operation
+echo API: $api
+echo Payload: $payload
+echo Destination: $destination
 
-mkdir -p $lwDataDirectory
-curl -s -X $operation https://$lwAccount$api --header 'Content-Type: application/json' --header 'Authorization: Bearer '$lwBearerToken'' --data $payload > $lwDataDirectory/tmp-data.json
+tmpfile="${lwTmpWorkDirectory}/lwapitmp.json"
 
-cat $lwDataDirectory/tmp-data.json | jq '.data | .[]' > $lwDataDirectory/tmp-result.json
+curl -s -X $operation https://$lwAccount$api --header 'Content-Type: application/json' --header 'Authorization: Bearer '$lwBearerToken'' --data $payload > $tmpfile
 
-nextPage=`cat $lwDataDirectory/tmp-data.json | jq -r '.paging.urls.nextPage'`
-rowsLoaded=`cat $lwDataDirectory/tmp-data.json | jq -r '.paging.rows'`
-totalRows=`cat $lwDataDirectory/tmp-data.json | jq -r '.paging.totalRows'`
-#echo Total number of rows: ${totalRows}
-#echo Loaded ${rowsLoaded} rows
+cat $tmpfile | jq '.data | .[]' > $destination
+
+nextPage=`cat $tmpfile | jq -r '.paging.urls.nextPage'`
+rowsLoaded=`cat $tmpfile | jq -r '.paging.rows'`
+totalRows=`cat $tmpfile | jq -r '.paging.totalRows'`
+echo Total number of rows: ${totalRows}
+echo Loaded ${rowsLoaded} rows
 
 while [[ $nextPage != "null" && -n "$nextPage" ]]
 do
-    #echo Load next page
-    curl -s $nextPage --header 'Authorization: Bearer '$lwBearerToken'' > $lwDataDirectory/tmp-data.json
+    echo Load next page
+    curl -s $nextPage --header 'Authorization: Bearer '$lwBearerToken'' > $tmpfile
 
+    cat $tmpfile | jq '.data | .[]' >> $destination
 
-    cat $lwDataDirectory/tmp-data.json | jq '.data | .[]' >> $lwDataDirectory/tmp-result.json
-
-    rows=`cat $lwDataDirectory/tmp-data.json | jq -r '.paging.rows'`
+    rows=`cat ${tmpfile} | jq -r '.paging.rows'`
     rowsLoaded=$(($rowsLoaded + $rows))
-    #echo Loaded ${rowsLoaded} rows
-    nextPage=`cat $lwDataDirectory/tmp-data.json | jq -r '.paging.urls.nextPage'`
+    echo Loaded ${rowsLoaded} rows
+    nextPage=`cat $tmpfile | jq -r '.paging.urls.nextPage'`
 done
-
-rm $lwDataDirectory/tmp-data.json
-
-cat $lwDataDirectory/tmp-result.json | jq
+echo Done loading
