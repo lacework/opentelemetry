@@ -6,11 +6,11 @@ spec:
 # Once an hour
 #  schedule: "0 * * * *"
 # Once a minute
-  schedule: "* * * * *"
+#  schedule: "* * * * *"
 # Once every five minutes
 #  schedule: "*/5 * * * *"
 # Once every 30 minutes
-#  schedule: "*/30 * * * *"
+  schedule: "*/30 * * * *"
   jobTemplate:
     spec:
       template:

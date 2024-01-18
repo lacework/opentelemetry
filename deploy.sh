@@ -14,3 +14,9 @@ kubectl create secret generic lacework-api-key \
   --from-literal=lwAccount=$3
 
 kubectl apply -f .
+
+echo Waiting for pods to run
+kubectl get pods --no-headers -o custom-columns=":metadata.name" | xargs -I {} kubectl wait --for=condition=ready pod {}
+
+echo Triggering all jobs manually
+kubectl get cronjobs --no-headers -o custom-columns=":metadata.name" | xargs -I {} sh -c 'kubectl create job {}-$(date +%s) --from=cronjob/{}'
