@@ -1,0 +1,49 @@
+laceworkApiKey:
+  account: set-account.lacework.net
+  keyId: set-key
+  secret: set-secret
+
+prometheusGrafana:
+  enabled: true
+
+opentelemetryCollector:
+  externalOltpEnabled: true
+  oltpEndpoint: oltp-server:4317
+  tlsInsecure: true
+
+helloWorldJob:
+  enabled: false
+# Once an hour
+#  schedule: "0 * * * *"
+# Once a minute
+  schedule: "* * * * *"
+
+containerVulnerabilityJob:
+  enabled: true
+# Once an hour
+#  schedule: "0 * * * *"
+# Once a minute
+#  schedule: "* * * * *"
+# Once every five minutes
+#  schedule: "*/5 * * * *"
+# Once every 30 minutes
+  schedule: "*/30 * * * *"
+  attributeFilter: "digest,fullImageName,lwUrl,activeContainers"
+
+hostVulnerabilityJob:
+  enabled: true
+# Once an hour
+#  schedule: "0 * * * *"
+# Once a minute
+#  schedule: "* * * * *"
+# Once every five minutes
+#  schedule: "*/5 * * * *"
+# Once every 30 minutes
+  schedule: "*/30 * * * *"
+  attributeFilter: "hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
+
+jobImage:
+  repository: "bjornboelacework/opentelemetry-extractor"
+  #pullPolicy: Always
+  pullPolicy: IfNotPresent
+  tag: "0.2"

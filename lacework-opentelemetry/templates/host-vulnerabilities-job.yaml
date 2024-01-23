@@ -1,43 +1,45 @@
+{{- if .Values.hostVulnerabilityJob.enabled -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: hello-world-job
+  name: host-vulnerabilities-job
 spec:
-# Once an hour
-#  schedule: "0 * * * *"
-# Once a minute
-  schedule: "* * * * *"
+  schedule: "{{ .Values.hostVulnerabilityJob.schedule }}"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: hello-world
-            image: bjornboelacework/opentelemetry-extractor:0.1
-            imagePullPolicy: "Always"
-            workingDir: /app/helloworld
+          - name: host-vulnerabilities
+            image: {{ .Values.jobImage.repository }}:{{ .Values.jobImage.tag }}
+            imagePullPolicy: {{ .Values.jobImage.pullPolicy }}
+            workingDir: /app/host-vulnerabilities
             args:
-              - helloworld.sh
+              - run.sh
             env:
             - name: lwKeyId
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwKeyId
+                  key: keyId
             - name: lwSecret
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwSecret
+                  key: secret
             - name: lwAccount
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwAccount
+                  key: account
             - name: lwDataDirectory
-              value: /data/helloworld
+              value: /data/host-vulnerabilities
+            - name: lwTmpWorkDirectory
+              value: /tmp/host-vulnerabilities
             - name: lwMetricsEndpoint
               value: http://opentelemetry-collector:4318
+            - name: lwAttributeFilter
+              value: "{{ .Values.hostVulnerabilityJob.attributeFilter }}"
             volumeMounts:
             - name: data-volume
               mountPath: /data
@@ -47,3 +49,4 @@ spec:
             persistentVolumeClaim:
               claimName: shared-storage
       backoffLimit: 5
+{{- end }}

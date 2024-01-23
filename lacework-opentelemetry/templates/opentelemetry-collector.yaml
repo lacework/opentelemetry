@@ -14,16 +14,24 @@ data:
     exporters:
       logging:
         loglevel: debug
+{{ if .Values.prometheusGrafana.enabled }}
       otlphttp/prometheus:
         endpoint: "http://prometheus:9090/api/v1/otlp"
         tls:
           insecure: true
+{{ end }}
+{{ if .Values.opentelemetryCollector.externalOltpEnabled }}
+      otlp:
+        endpoint: "{{ .Values.opentelemetryCollector.oltpEndpoint }}"
+        tls:
+          insecure: {{ .Values.opentelemetryCollector.tlsInsecure }}
+{{ end }}
     service:
       pipelines:
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [logging, otlphttp/prometheus]
+          exporters: [logging{{- if .Values.prometheusGrafana.enabled -}}, otlphttp/prometheus{{- end -}}{{- if .Values.opentelemetryCollector.externalOltpEnabled -}}, otlp{{- end -}}]
 
 ---
 

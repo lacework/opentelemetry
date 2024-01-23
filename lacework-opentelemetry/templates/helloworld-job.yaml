@@ -1,51 +1,41 @@
+{{- if .Values.helloWorldJob.enabled -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: container-vulnerabilities-job
+  name: hello-world-job
 spec:
-# Once an hour
-#  schedule: "0 * * * *"
-# Once a minute
-#  schedule: "* * * * *"
-# Once every five minutes
-#  schedule: "*/5 * * * *"
-# Once every 30 minutes
-  schedule: "*/30 * * * *"
+  schedule: "{{ .Values.helloWorldJob.schedule }}"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: container-vulnerabilities
-            image: bjornboelacework/opentelemetry-extractor:0.2
-            imagePullPolicy: "Always"
-            workingDir: /app/container-vulnerabilities
+          - name: hello-world
+            image: {{ .Values.jobImage.repository }}:{{ .Values.jobImage.tag }}
+            imagePullPolicy: {{ .Values.jobImage.pullPolicy }}
+            workingDir: /app/helloworld
             args:
-              - run.sh
+              - helloworld.sh
             env:
             - name: lwKeyId
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwKeyId
+                  key: keyId
             - name: lwSecret
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwSecret
+                  key: secret
             - name: lwAccount
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwAccount
+                  key: account
             - name: lwDataDirectory
-              value: /data/container-vulnerabilities
-            - name: lwTmpWorkDirectory
-              value: /tmp/host-vulnerabilities
+              value: /data/helloworld
             - name: lwMetricsEndpoint
               value: http://opentelemetry-collector:4318
-            - name: lwAttributeFilter
-              value: "digest,fullImageName,lwUrl,activeContainers"
             volumeMounts:
             - name: data-volume
               mountPath: /data
@@ -55,3 +45,4 @@ spec:
             persistentVolumeClaim:
               claimName: shared-storage
       backoffLimit: 5
+{{- end }}

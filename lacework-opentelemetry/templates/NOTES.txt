@@ -1,0 +1,13 @@
+Congratulations! The Lacework OpenTelemetry integration is up and running!
+
+Run the following command to kickstart all jobs and get data available sooner:
+kubectl get cronjobs --no-headers -o custom-columns=":metadata.name" | xargs -I {} sh -c 'kubectl create job {}-$(date +%s) --from=cronjob/{}'
+
+No services are exposed outside Kubernetes, but all of them can be opened using the following command:
+{{- if .Values.prometheusGrafana.enabled }}
+kubectl port-forward service/grafana 3000:3000 & \
+kubectl port-forward service/prometheus 9090:9090 & \
+{{- end }}
+kubectl port-forward service/opentelemetry-collector 8888:8888 & \
+kubectl port-forward service/opentelemetry-collector 4317:4317 & \
+kubectl port-forward service/opentelemetry-collector 4318:4318

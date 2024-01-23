@@ -6,7 +6,17 @@ Project for exposing metrics from Lacework using the [OpenTelemetry](https://ope
 * In the Lacework UI, generate and download an API Key
 * Deploy the integration, OpenTelemetry collector, Prometheus and Grafana using the following command:
   ```
-  ./deploy.sh '<lacework key id> <lacework secret> <lacework account, e.g. myaccount.lacework.net>
+  git clone https://github.com/lacework/opentelemetry
+  cd opentelemetry
+  helm upgrade --install \
+        --set laceworkApiKey.account="youraccount.lacework.net" \
+        --set laceworkApiKey.keyId="keyid" \
+        --set laceworkApiKey.secret="secret" \
+        open-telemetry lacework-opentelemetry
+  ```
+* The synchronization of data happens in batches every 30 minutes. Run the following command to start all batch jobs immediately:
+  ```
+  kubectl get cronjobs --no-headers -o custom-columns=":metadata.name" | xargs -I {} sh -c 'kubectl create job {}-$(date +%s) --from=cronjob/{}'
   ```
 * Run the following command to open ports to communicate with OpenTelemetry Connector, Prometheus and Grafana:
   ```

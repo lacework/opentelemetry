@@ -1,25 +1,19 @@
+{{- if .Values.containerVulnerabilityJob.enabled -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: host-vulnerabilities-job
+  name: container-vulnerabilities-job
 spec:
-# Once an hour
-#  schedule: "0 * * * *"
-# Once a minute
-#  schedule: "* * * * *"
-# Once every five minutes
-#  schedule: "*/5 * * * *"
-# Once every 30 minutes
-  schedule: "*/30 * * * *"
+  schedule: "{{ .Values.containerVulnerabilityJob.schedule }}"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: host-vulnerabilities
-            image: bjornboelacework/opentelemetry-extractor:0.2
-            imagePullPolicy: "Always"
-            workingDir: /app/host-vulnerabilities
+          - name: container-vulnerabilities
+            image: {{ .Values.jobImage.repository }}:{{ .Values.jobImage.tag }}
+            imagePullPolicy: {{ .Values.jobImage.pullPolicy }}
+            workingDir: /app/container-vulnerabilities
             args:
               - run.sh
             env:
@@ -27,25 +21,25 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwKeyId
+                  key: keyId
             - name: lwSecret
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwSecret
+                  key: secret
             - name: lwAccount
               valueFrom:
                 secretKeyRef:
                   name: lacework-api-key
-                  key: lwAccount
+                  key: account
             - name: lwDataDirectory
-              value: /data/host-vulnerabilities
+              value: /data/container-vulnerabilities
             - name: lwTmpWorkDirectory
               value: /tmp/host-vulnerabilities
             - name: lwMetricsEndpoint
               value: http://opentelemetry-collector:4318
             - name: lwAttributeFilter
-              value: "hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
+              value: "{{ .Values.containerVulnerabilityJob.attributeFilter }}"
             volumeMounts:
             - name: data-volume
               mountPath: /data
@@ -55,3 +49,4 @@ spec:
             persistentVolumeClaim:
               claimName: shared-storage
       backoffLimit: 5
+{{- end }}

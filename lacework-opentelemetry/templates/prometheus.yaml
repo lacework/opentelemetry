@@ -1,3 +1,4 @@
+{{- if .Values.prometheusGrafana.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -90,3 +91,4 @@ spec:
     - protocol: TCP
       port: 9090
       targetPort: 9090
+{{- end }}
