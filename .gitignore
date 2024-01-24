@@ -1,3 +1,5 @@
 setenv.sh
 dodeploy.sh
 src/lacework/machines
+src/opentelemetrymetricscache
+.DS_Store

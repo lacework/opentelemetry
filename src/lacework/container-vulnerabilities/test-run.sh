@@ -19,5 +19,5 @@ echo Testing
     source start.sh run.sh
 
     echo Second run
-    source start.sh run.sh
+#    source start.sh run.sh
 )

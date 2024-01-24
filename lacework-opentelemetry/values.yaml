@@ -7,7 +7,7 @@ prometheusGrafana:
   enabled: true
 
 opentelemetryCollector:
-  externalOltpEnabled: true
+  externalOltpEnabled: false
   oltpEndpoint: oltp-server:4317
   tlsInsecure: true
 
