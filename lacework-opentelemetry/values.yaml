@@ -28,7 +28,8 @@ containerVulnerabilityJob:
 #  schedule: "*/5 * * * *"
 # Once every 30 minutes
   schedule: "*/30 * * * *"
-  attributeFilter: "digest,fullImageName,lwUrl,activeContainers"
+  #attributeFilter: "digest,fullImageName,lwUrl,activeContainers"
+  attributeFilter: ""
 
 hostVulnerabilityJob:
   enabled: true
@@ -40,7 +41,8 @@ hostVulnerabilityJob:
 #  schedule: "*/5 * * * *"
 # Once every 30 minutes
   schedule: "*/30 * * * *"
-  attributeFilter: "hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
+  #attributeFilter: "hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
+  attributeFilter: ""
 
 jobImage:
   repository: "bjornboelacework/opentelemetry-extractor"
