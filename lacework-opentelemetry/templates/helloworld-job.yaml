@@ -34,8 +34,12 @@ spec:
                   key: account
             - name: lwDataDirectory
               value: /data/helloworld
+            - name: lwTmpWorkDirectory
+              value: /tmp/helloworld
             - name: lwMetricsEndpoint
               value: http://opentelemetry-collector:4318
+            - name: lwSecondsPauseAferRun
+              value: "{{ .Values.helloWorldJob.secondsPauseAferRun }}"
             volumeMounts:
             - name: data-volume
               mountPath: /data

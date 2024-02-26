@@ -3,6 +3,12 @@ laceworkApiKey:
   keyId: set-key
   secret: set-secret
 
+jobImage:
+  repository: "bjornboelacework/opentelemetry-extractor"
+  #pullPolicy: Always
+  pullPolicy: IfNotPresent
+  tag: "0.3"
+
 prometheusGrafana:
   enabled: true
 
@@ -17,6 +23,7 @@ helloWorldJob:
 #  schedule: "0 * * * *"
 # Once a minute
   schedule: "* * * * *"
+  secondsPauseAferRun: 180
 
 containerVulnerabilityJob:
   enabled: true
@@ -30,6 +37,7 @@ containerVulnerabilityJob:
   schedule: "*/30 * * * *"
   #attributeFilter: "digest,fullImageName,lwUrl,activeContainers"
   attributeFilter: ""
+  storeExecutionLogs: true
 
 hostVulnerabilityJob:
   enabled: true
@@ -43,9 +51,4 @@ hostVulnerabilityJob:
   schedule: "*/30 * * * *"
   #attributeFilter: "hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
   attributeFilter: ""
-
-jobImage:
-  repository: "bjornboelacework/opentelemetry-extractor"
-  #pullPolicy: Always
-  pullPolicy: IfNotPresent
-  tag: "0.2"
+  storeExecutionLogs: true

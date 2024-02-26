@@ -40,6 +40,8 @@ spec:
               value: http://opentelemetry-collector:4318
             - name: lwAttributeFilter
               value: "{{ .Values.hostVulnerabilityJob.attributeFilter }}"
+            - name: lwStoreExecutionLogs
+              value: "{{ .Values.hostVulnerabilityJob.storeExecutionLogs }}"
             volumeMounts:
             - name: data-volume
               mountPath: /data

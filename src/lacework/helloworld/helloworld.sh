@@ -13,3 +13,6 @@ cat $testFile
 echo Do a cool test!
 echo $PATH
 echo.sh "It is working"
+echo Do pause for $lwSecondsPauseAferRun seconds
+sleep $lwSecondsPauseAferRun
+echo End pause

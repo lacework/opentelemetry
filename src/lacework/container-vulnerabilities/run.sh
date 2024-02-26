@@ -150,6 +150,15 @@ echo "{
 
 filter-attributes.sh "tmp-payload.json" "final-payload.json" "$lwAttributeFilter"
 
+if [ "$lwStoreExecutionLogs" = "true" ]; then
+  echo Store logs
+  logFileName="$lwDataDirectory/logs-`date`.tar.gz"
+  logFileName="${logFileName// /-}"
+  tar czf "$logFileName" $lwTmpWorkDirectory/*
+  echo Clean up logs - only keep last 5 executions
+  ls -t "$lwDataDirectory/logs"* | tail -n +6 | xargs rm
+fi
+
 echo Got `cat final-payload.json | wc -l` lines of json data
 echo Sending to opentelmetry
 curl -S -X POST -H "Content-Type: application/json" -d @final-payload.json -i ${lwMetricsEndpoint}/v1/metrics

@@ -3,3 +3,5 @@ dodeploy.sh
 src/lacework/machines
 src/opentelemetrymetricscache
 .DS_Store
+dodevdeploy.sh
+remote-build.sh

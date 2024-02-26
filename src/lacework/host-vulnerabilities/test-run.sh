@@ -10,6 +10,7 @@ echo Testing
     export lwTmpWorkDirectory="/tmp/lwhosttesttmp"
     export lwMetricsEndpoint="http://localhost:4318"
     export lwAttributeFilter="hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
+    export lwStoreExecutionLogs=true
 
     export PATH=../shared:$PATH
 
@@ -19,5 +20,5 @@ echo Testing
     source start.sh run.sh
 
     echo Second run
-#    source start.sh run.sh
+    source start.sh run.sh
 )

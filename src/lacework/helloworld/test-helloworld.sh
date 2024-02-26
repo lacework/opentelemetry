@@ -7,6 +7,8 @@ fi
 echo Testing
 (
     export lwDataDirectory="/tmp/helloworldtest"
+    export lwTmpWorkDirectory="/tmp/helloworldtesttmp"
     export lwMetricsEndpoint="http://localhost:4318"
+    export lwSecondsPauseAferRun=5
     source ../shared/start.sh helloworld.sh
 )

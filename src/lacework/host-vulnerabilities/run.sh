@@ -41,7 +41,7 @@ jq --arg currnanotime "$currnanotime" '{
     attributes: .machineTags
 }' vuln-data.json | jq -c | sort | uniq | jq '(.attributes | to_entries) as $entries | 
                                   .attributes = $entries | 
-                                  .attributes |= map({key: .key, value: {stringValue: .value}})' |
+                                  .attributes |= map({key: .key, value: {stringValue: .value|tostring}})' |
       jq  --arg lwUrl "$lwUrl" \
           '.attributes += [{
                               "key": "hostName",
@@ -135,6 +135,15 @@ echo "{
 }"  | jq > tmp-payload.json
 
 filter-attributes.sh "tmp-payload.json" "final-payload.json" "$lwAttributeFilter"
+
+if [ "$lwStoreExecutionLogs" = "true" ]; then
+  echo Store logs
+  logFileName="$lwDataDirectory/logs-`date`.tar.gz"
+  logFileName="${logFileName// /-}"
+  tar czf "$logFileName" $lwTmpWorkDirectory/*
+  echo Clean up logs - only keep last 5 executions
+  ls -t "$lwDataDirectory/logs"* | tail -n +6 | xargs rm
+fi
 
 echo Got `cat final-payload.json | wc -l` lines of json data
 echo Sending to opentelmetry
