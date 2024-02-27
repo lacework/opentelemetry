@@ -7,7 +7,7 @@ jobImage:
   repository: "bjornboelacework/opentelemetry-extractor"
   #pullPolicy: Always
   pullPolicy: IfNotPresent
-  tag: "0.3"
+  tag: "0.4"
 
 prometheusGrafana:
   enabled: true

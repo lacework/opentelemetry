@@ -34,11 +34,12 @@ jq --arg currnanotime "$currnanotime" '{
     repo: .evalCtx.image_info.repo,
     tags: .evalCtx.image_info.tags,
     lwEvalGuid: .evalGuid,
-    cveCritical: .riskInfo.factors_breakdown.cve_counts.Critical,
-    cveHigh: .riskInfo.factors_breakdown.cve_counts.High,
-    cveMedium: .riskInfo.factors_breakdown.cve_counts.Medium,
-    cveInfo: .riskInfo.factors_breakdown.cve_counts.Other,
-    activeContainers: .riskInfo.factors_breakdown.active_containers,
+    riskScore: .imageRiskScore,
+    cveCritical: .imageRiskInfo.factors_breakdown.cve_counts.Critical,
+    cveHigh: .imageRiskInfo.factors_breakdown.cve_counts.High,
+    cveMedium: .imageRiskInfo.factors_breakdown.cve_counts.Medium,
+    cveInfo: .imageRiskInfo.factors_breakdown.cve_counts.Other,
+    activeContainers: .imageRiskInfo.factors_breakdown.active_containers,
     scanStartTimeNanos: $currnanotime,
     scanEndTimeNanos: $currnanotime
 } | .tags |= join(", ")' vuln-data.json | jq -c | sort | uniq | jq --arg lwUrl "$lwUrl" \
@@ -70,6 +71,10 @@ jq --arg currnanotime "$currnanotime" '{
                                                                         "key": "lwUrl",
                                                                         "value": {stringValue: $lwUrl}
                                                                     }] |
+                                                    .attributes += [{
+                                                                        "key": "riskScore",
+                                                                        "value": {doubleValue: .riskScore}
+                                                                    }] | del(.riskScore) |
                                                     .attributes += [{
                                                                     "key": "activeContainers",
                                                                     "value": {intValue: .activeContainers}

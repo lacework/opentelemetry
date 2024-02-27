@@ -32,12 +32,12 @@ jq --arg currnanotime "$currnanotime" '{
     hostName: .evalCtx.hostname,
     lwMachineid: .mid,
     startTime: $currnanotime,
-    riskScore: .riskScore,
-    cveCritical: .riskInfo.factors_breakdown.cve_counts_by_package_status.Overall.Critical,
-    cveHigh: .riskInfo.factors_breakdown.cve_counts_by_package_status.Overall.High,
-    cveMedium: .riskInfo.factors_breakdown.cve_counts_by_package_status.Overall.Medium,
-    cveLow: .riskInfo.factors_breakdown.cve_counts_by_package_status.Overall.Low,
-    cveInfo: .riskInfo.factors_breakdown.cve_counts_by_package_status.Overall.Info,
+    riskScore: .hostRiskScore,
+    cveCritical: .hostRiskInfo.host_risk_factors_breakdown.cve_counts_by_package_status.Overall.Critical,
+    cveHigh: .hostRiskInfo.host_risk_factors_breakdown.cve_counts_by_package_status.Overall.High,
+    cveMedium: .hostRiskInfo.host_risk_factors_breakdown.cve_counts_by_package_status.Overall.Medium,
+    cveLow: .hostRiskInfo.host_risk_factors_breakdown.cve_counts_by_package_status.Overall.Low,
+    cveInfo: .hostRiskInfo.host_risk_factors_breakdown.cve_counts_by_package_status.Overall.Info,
     attributes: .machineTags
 }' vuln-data.json | jq -c | sort | uniq | jq '(.attributes | to_entries) as $entries | 
                                   .attributes = $entries | 
