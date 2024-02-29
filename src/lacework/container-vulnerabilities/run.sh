@@ -34,12 +34,12 @@ jq --arg currnanotime "$currnanotime" '{
     repo: .evalCtx.image_info.repo,
     tags: .evalCtx.image_info.tags,
     lwEvalGuid: .evalGuid,
-    riskScore: .imageRiskScore,
-    cveCritical: .imageRiskInfo.factors_breakdown.cve_counts.Critical,
-    cveHigh: .imageRiskInfo.factors_breakdown.cve_counts.High,
-    cveMedium: .imageRiskInfo.factors_breakdown.cve_counts.Medium,
-    cveInfo: .imageRiskInfo.factors_breakdown.cve_counts.Other,
-    activeContainers: .imageRiskInfo.factors_breakdown.active_containers,
+    riskScore: (.imageRiskScore // 0),
+    cveCritical: (.imageRiskInfo.factors_breakdown.cve_counts.Critical // 0),
+    cveHigh: (.imageRiskInfo.factors_breakdown.cve_counts.High // 0),
+    cveMedium: (.imageRiskInfo.factors_breakdown.cve_counts.Medium // 0),
+    cveInfo: (.imageRiskInfo.factors_breakdown.cve_counts.Other // 0),
+    activeContainers: (.imageRiskInfo.factors_breakdown.active_containers // 0),
     scanStartTimeNanos: $currnanotime,
     scanEndTimeNanos: $currnanotime
 } | .tags |= join(", ")' vuln-data.json | jq -c | sort | uniq | jq --arg lwUrl "$lwUrl" \
