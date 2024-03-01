@@ -70,15 +70,7 @@ jq --arg currnanotime "$currnanotime" '{
                                                     .attributes += [{
                                                                         "key": "lwUrl",
                                                                         "value": {stringValue: $lwUrl}
-                                                                    }] |
-                                                    .attributes += [{
-                                                                        "key": "riskScore",
-                                                                        "value": {doubleValue: .riskScore}
-                                                                    }] | del(.riskScore) |
-                                                    .attributes += [{
-                                                                    "key": "activeContainers",
-                                                                    "value": {intValue: .activeContainers}
-                                                                }] | del(.activeContainers) | del(.lwEvalGuid)' > tmp-condenced-vulnerability-information.json
+                                                                    }] | del(.lwEvalGuid)' > tmp-condenced-vulnerability-information.json
 
 cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveCritical,
@@ -128,8 +120,31 @@ cat tmp-condenced-vulnerability-information.json | jq '{
                                                                                     gauge: {dataPoints: .}
                                                                                 }' > tmp-info.json
 
+cat tmp-condenced-vulnerability-information.json | jq '{
+                                                        asDouble: .riskScore,
+                                                        start_time_unix_nano: .scanStartTimeNanos,
+                                                        time_unix_nano: .scanEndTimeNanos,
+                                                        attributes: .attributes
+                                                        }' | jq 'select(.asDouble != null)' | jq --slurp '.' | jq '{
+                                                                                    name: "container.riskscore",
+                                                                                    unit: "Risk Score",
+                                                                                    description: "Container Risk Score",
+                                                                                    gauge: {dataPoints: .}
+                                                                                }' > tmp-riskscore.json
 
-ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-info.json | jq --slurp '.'`
+cat tmp-condenced-vulnerability-information.json | jq '{
+                                                        asDouble: .activeContainers,
+                                                        start_time_unix_nano: .scanStartTimeNanos,
+                                                        time_unix_nano: .scanEndTimeNanos,
+                                                        attributes: .attributes
+                                                        }' | jq 'select(.asDouble != null)' | jq --slurp '.' | jq '{
+                                                                                    name: "container.activecontainers",
+                                                                                    unit: "Active Containers",
+                                                                                    description: "Number of Active Containers",
+                                                                                    gauge: {dataPoints: .}
+                                                                                }' > tmp-activecontainers.json
+
+ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-info.json tmp-riskscore.json tmp-activecontainers.json | jq --slurp '.'`
 
 echo "{
   \"resourceMetrics\": [

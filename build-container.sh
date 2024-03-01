@@ -1,1 +1,1 @@
-docker build -t bjornboelacework/opentelemetry-extractor:0.5 .
+docker build -t bjornboelacework/opentelemetry-extractor:0.6 .

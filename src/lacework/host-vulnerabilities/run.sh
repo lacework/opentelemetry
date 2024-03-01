@@ -52,10 +52,6 @@ jq --arg currnanotime "$currnanotime" '{
                               "value": {intValue: .lwMachineid}
                           }] | del(.lwMachineid) |
           .attributes += [{
-                              "key": "riskScore",
-                              "value": {doubleValue: .riskScore}
-                          }] | del(.riskScore) |
-          .attributes += [{
                               "key": "lwUrl",
                               "value": {stringValue: $lwUrl}
                           }]' |
@@ -109,8 +105,19 @@ cat tmp-condenced-vulnerability-information.json | jq '{
                                                                                     gauge: {dataPoints: .}
                                                                                 }' > tmp-info.json
 
+cat tmp-condenced-vulnerability-information.json | jq '{
+                                                        asDouble: .riskScore,
+                                                        start_time_unix_nano: .startTime,
+                                                        time_unix_nano: .startTime,
+                                                        attributes: .attributes
+                                                        }' | jq 'select(.asDouble != null)' | jq --slurp '.' | jq '{
+                                                                                    name: "host.riskscore",
+                                                                                    unit: "Risk Score",
+                                                                                    description: "Host Risk Score",
+                                                                                    gauge: {dataPoints: .}
+                                                                                }' > tmp-riskscore.json
 
-ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-info.json | jq --slurp '.'`
+ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-info.json tmp-riskscore.json | jq --slurp '.'`
 
 echo "{
   \"resourceMetrics\": [
