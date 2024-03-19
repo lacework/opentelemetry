@@ -94,6 +94,18 @@ cat tmp-condenced-vulnerability-information.json | jq '{
                                                                                 }' > tmp-medium.json
 
 cat tmp-condenced-vulnerability-information.json | jq '{
+                                                        asDouble: .cveLow,
+                                                        start_time_unix_nano: .startTime,
+                                                        time_unix_nano: .startTime,
+                                                        attributes: .attributes
+                                                        }' | jq 'select(.asDouble != null)' | jq --slurp '.' | jq '{
+                                                                                    name: "host.cve.low",
+                                                                                    unit: "CVEs",
+                                                                                    description: "Number of low CVEs",
+                                                                                    gauge: {dataPoints: .}
+                                                                                }' > tmp-low.json
+
+cat tmp-condenced-vulnerability-information.json | jq '{
                                                         asDouble: .cveInfo,
                                                         start_time_unix_nano: .startTime,
                                                         time_unix_nano: .startTime,
@@ -117,7 +129,7 @@ cat tmp-condenced-vulnerability-information.json | jq '{
                                                                                     gauge: {dataPoints: .}
                                                                                 }' > tmp-riskscore.json
 
-ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-info.json tmp-riskscore.json | jq --slurp '.'`
+ALL_VULNS=`cat tmp-critical.json tmp-high.json tmp-medium.json tmp-low.json tmp-info.json tmp-riskscore.json | jq --slurp '.'`
 
 echo "{
   \"resourceMetrics\": [
@@ -148,8 +160,9 @@ if [ "$lwStoreExecutionLogs" = "true" ]; then
   logFileName="$lwDataDirectory/logs-`date`.tar.gz"
   logFileName="${logFileName// /-}"
   tar czf "$logFileName" $lwTmpWorkDirectory/*
-  echo Clean up logs - only keep last 5 executions
-  ls -t "$lwDataDirectory/logs"* | tail -n +6 | xargs rm
+  echo Clean up logs - only keep last $lwStoreExecutionLogsDays executions
+  lwStoreExecutionLogsDays=$(($lwStoreExecutionLogsDays + 1))
+  ls -t "$lwDataDirectory/logs"* | tail -n +$lwStoreExecutionLogsDays | xargs rm
 fi
 
 echo Got `cat final-payload.json | wc -l` lines of json data

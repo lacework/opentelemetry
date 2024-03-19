@@ -11,6 +11,7 @@ echo Testing
     export lwMetricsEndpoint="http://localhost:4318"
     export lwAttributeFilter="hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
     export lwStoreExecutionLogs=true
+    export lwStoreExecutionLogsDays=10
 
     export PATH=../shared:$PATH
 

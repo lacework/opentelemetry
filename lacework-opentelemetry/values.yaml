@@ -7,7 +7,7 @@ jobImage:
   repository: "bjornboelacework/opentelemetry-extractor"
   #pullPolicy: Always
   pullPolicy: IfNotPresent
-  tag: "0.6"
+  tag: "0.7"
 
 prometheusGrafana:
   enabled: true
@@ -38,6 +38,7 @@ containerVulnerabilityJob:
   #attributeFilter: "digest,fullImageName,lwUrl,activeContainers"
   attributeFilter: ""
   storeExecutionLogs: true
+  storeExecutionLogsDays: 5
 
 hostVulnerabilityJob:
   enabled: true
@@ -52,3 +53,4 @@ hostVulnerabilityJob:
   #attributeFilter: "hostName,InstanceId,lw_InternetExposure,riskScore,lwUrl"
   attributeFilter: ""
   storeExecutionLogs: true
+  storeExecutionLogsDays: 5

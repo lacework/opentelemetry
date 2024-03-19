@@ -175,8 +175,9 @@ if [ "$lwStoreExecutionLogs" = "true" ]; then
   logFileName="$lwDataDirectory/logs-`date`.tar.gz"
   logFileName="${logFileName// /-}"
   tar czf "$logFileName" $lwTmpWorkDirectory/*
-  echo Clean up logs - only keep last 5 executions
-  ls -t "$lwDataDirectory/logs"* | tail -n +6 | xargs rm
+  echo Clean up logs - only keep last $lwStoreExecutionLogsDays executions
+  lwStoreExecutionLogsDays=$(($lwStoreExecutionLogsDays + 1))
+  ls -t "$lwDataDirectory/logs"* | tail -n +$lwStoreExecutionLogsDays | xargs rm
 fi
 
 echo Got `cat final-payload.json | wc -l` lines of json data

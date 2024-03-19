@@ -1,1 +1,1 @@
-docker push bjornboelacework/opentelemetry-extractor:0.6
+docker push bjornboelacework/opentelemetry-extractor:0.7

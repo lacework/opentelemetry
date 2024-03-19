@@ -42,6 +42,8 @@ spec:
               value: "{{ .Values.hostVulnerabilityJob.attributeFilter }}"
             - name: lwStoreExecutionLogs
               value: "{{ .Values.hostVulnerabilityJob.storeExecutionLogs }}"
+            - name: lwStoreExecutionLogsDays
+              value: "{{ .Values.hostVulnerabilityJob.storeExecutionLogsDays }}"
             volumeMounts:
             - name: data-volume
               mountPath: /data
